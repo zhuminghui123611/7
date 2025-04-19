@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>区块链API网关 - AllOrigins版</title>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    h1 {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .endpoint {
+      background: #f4f4f4;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      border-left: 4px solid #2c3e50;
+    }
+    code {
+      background: #eee;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .result {
+      background: #f8f8f8;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      min-height: 100px;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+    .error {
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <h1>区块链API网关</h1>
+  <p>使用AllOrigins代理的多链区块链API接口。所有API调用通过AllOrigins代理，绕过CORS限制。</p>
+
+  <div class="card">
+    <h2>配置信息</h2>
+    <div class="endpoint">
+      <h3>API密钥和端点(已硬编码)</h3>
+      <div>
+        <p><strong>区块链RPC节点:</strong></p>
+        <ul id="rpc-list">
+          <!-- 将由JavaScript填充 -->
+        </ul>
+        <p><strong>WalletConnect项目ID:</strong> <code>64b6a6cc7a2296ccb0b97b887b6dee1a</code></p>
+        <p><strong>1inch API密钥:</strong> <code>BFmmhv1wAlc12w1jd6xy8YMy5y0sxLPh</code></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>区块链RPC API</h2>
+    <div class="endpoint">
+      <h3>发送RPC请求</h3>
+      <div class="form-group">
+        <label for="chain">选择区块链网络:</label>
+        <select id="chain">
+          <option value="eth">以太坊 (Ethereum)</option>
+          <option value="polygon">Polygon</option>
+          <option value="arbitrum">Arbitrum</option>
+          <option value="optimism">Optimism</option>
+          <option value="gnosis">Gnosis</option>
+          <option value="blast">Blast</option>
+          <option value="avalanche">Avalanche</option>
+          <option value="scroll">Scroll</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="rpc-method">RPC方法:</label>
+        <select id="rpc-method">
+          <option value="eth_blockNumber">eth_blockNumber</option>
+          <option value="eth_chainId">eth_chainId</option>
+          <option value="net_version">net_version</option>
+          <option value="eth_gasPrice">eth_gasPrice</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="rpc-params">参数 (JSON格式):</label>
+        <input type="text" id="rpc-params" value="[]" placeholder="例如: []">
+      </div>
+      <button id="send-rpc">发送RPC请求</button>
+      <div class="result" id="rpc-result">
+        <!-- 结果将在这里显示 -->
+        <span class="loading">点击按钮发送请求...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>1inch API</h2>
+    <div class="endpoint">
+      <h3>查询1inch数据</h3>
+      <div class="form-group">
+        <label for="inch-chain">选择链ID:</label>
+        <select id="inch-chain">
+          <option value="1">以太坊 (1)</option>
+          <option value="137">Polygon (137)</option>
+          <option value="42161">Arbitrum (42161)</option>
+          <option value="10">Optimism (10)</option>
+          <option value="100">Gnosis (100)</option>
+          <option value="81457">Blast (81457)</option>
+          <option value="43114">Avalanche (43114)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="inch-endpoint">选择端点:</label>
+        <select id="inch-endpoint">
+          <option value="tokens">获取代币列表</option>
+          <option value="protocols">获取支持的协议</option>
+          <option value="healthcheck">健康检查</option>
+        </select>
+      </div>
+      <button id="send-inch">发送1inch请求</button>
+      <div class="result" id="inch-result">
+        <!-- 结果将在这里显示 -->
+        <span class="loading">点击按钮发送请求...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>WalletConnect配置</h2>
+    <div class="endpoint">
+      <h3>WalletConnect配置信息</h3>
+      <p>项目ID: <code>64b6a6cc7a2296ccb0b97b887b6dee1a</code></p>
+      <p>支持的链: <span id="wallet-connect-chains"></span></p>
+    </div>
+  </div>
+
+  <script>
+    // 硬编码API端点和密钥
+    const RPC_ENDPOINTS = {
+      eth: "https://rpc.ankr.com/eth/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      polygon: "https://rpc.ankr.com/polygon/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      arbitrum: "https://rpc.ankr.com/arbitrum/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      optimism: "https://rpc.ankr.com/optimism/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      gnosis: "https://rpc.ankr.com/gnosis/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      blast: "https://rpc.ankr.com/blast/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      avalanche: "https://rpc.ankr.com/avalanche/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840",
+      scroll: "https://rpc.ankr.com/scroll/ce9c9f46eac0e045692e0d041fb543747122fb07b9b50f705f70f1004d841840"
+    };
+
+    const WALLET_CONNECT_PROJECT_ID = "64b6a6cc7a2296ccb0b97b887b6dee1a";
+    const ONEINCH_API_KEY = "BFmmhv1wAlc12w1jd6xy8YMy5y0sxLPh";
+    
+    // 使用AllOrigins作为代理
+    const ALLORIGINS_URL = "https://api.allorigins.win/raw?url=";
+    
+    // 填充RPC列表
+    const rpcList = document.getElementById('rpc-list');
+    for (const [chain, url] of Object.entries(RPC_ENDPOINTS)) {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${chain}:</strong> <code>${url}</code>`;
+      rpcList.appendChild(li);
+    }
+    
+    // 填充WalletConnect支持的链
+    document.getElementById('wallet-connect-chains').textContent = Object.keys(RPC_ENDPOINTS).join(', ');
+    
+    // 发送RPC请求
+    document.getElementById('send-rpc').addEventListener('click', async () => {
+      const chain = document.getElementById('chain').value;
+      const method = document.getElementById('rpc-method').value;
+      const params = JSON.parse(document.getElementById('rpc-params').value || '[]');
+      const resultElement = document.getElementById('rpc-result');
+      
+      resultElement.innerHTML = '<span class="loading">请求中...</span>';
+      
+      try {
+        const rpcUrl = RPC_ENDPOINTS[chain];
+        const requestBody = {
+          jsonrpc: '2.0',
+          id: 1,
+          method,
+          params
+        };
+        
+        // 构建代理URL
+        const proxyUrl = ALLORIGINS_URL + encodeURIComponent(rpcUrl);
+        
+        // 发送请求
+        const response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        resultElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (error) {
+        resultElement.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+        console.error('RPC请求错误:', error);
+      }
+    });
+    
+    // 发送1inch请求
+    document.getElementById('send-inch').addEventListener('click', async () => {
+      const chainId = document.getElementById('inch-chain').value;
+      const endpoint = document.getElementById('inch-endpoint').value;
+      const resultElement = document.getElementById('inch-result');
+      
+      resultElement.innerHTML = '<span class="loading">请求中...</span>';
+      
+      try {
+        // 构建1inch API URL
+        const apiUrl = `https://api.1inch.io/v5/${chainId}/${endpoint}`;
+        
+        // 构建代理URL
+        const proxyUrl = ALLORIGINS_URL + encodeURIComponent(apiUrl);
+        
+        // 发送请求
+        const response = await fetch(proxyUrl, {
+          headers: {
+            'Authorization': `Bearer ${ONEINCH_API_KEY}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // 限制结果大小，避免渲染太多内容
+        let displayData = data;
+        if (endpoint === 'tokens' && data.tokens) {
+          // 只显示前10个token
+          const tokens = Object.keys(data.tokens).slice(0, 10).reduce((obj, key) => {
+            obj[key] = data.tokens[key];
+            return obj;
+          }, {});
+          displayData = { ...data, tokens, note: '(仅显示前10个代币)' };
+        }
+        
+        resultElement.innerHTML = `<pre>${JSON.stringify(displayData, null, 2)}</pre>`;
+      } catch (error) {
+        resultElement.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+        console.error('1inch请求错误:', error);
+      }
+    });
+  </script>
+</body>
+</html> 
