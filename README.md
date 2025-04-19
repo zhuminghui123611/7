@@ -20,6 +20,14 @@
 - Avalanche (avalanche)
 - Scroll (scroll)
 
+## 支持的API
+
+1. **区块链RPC API** - 各大公链的JSON-RPC接口
+2. **1inch API** - DEX聚合器API
+3. **Reservoir API** - NFT市场数据API
+4. **CCXT (模拟)** - 加密货币交易所API（基于公共REST接口模拟）
+5. **WalletConnect** - Web3钱包连接
+
 ## 部署说明
 
 1. 直接将`index.html`文件上传到任何静态网站托管服务，如GitHub Pages、Netlify、Vercel等
@@ -31,7 +39,16 @@
 
 1. **区块链RPC API** - 向各区块链网络发送JSON-RPC请求
 2. **1inch API** - 查询1inch交易聚合器API
-3. **WalletConnect配置** - 获取WalletConnect配置信息
+3. **Reservoir API** - 查询NFT市场数据
+4. **CCXT** - 查询各大交易所的行情数据
+5. **WalletConnect配置** - 获取WalletConnect配置信息
+
+## API密钥信息
+
+- **区块链RPC节点** - Ankr API密钥
+- **WalletConnect项目ID** - `64b6a6cc7a2296ccb0b97b887b6dee1a`
+- **1inch API密钥** - `BFmmhv1wAlc12w1jd6xy8YMy5y0sxLPh`
+- **Reservoir API密钥** - `d1d6d023-5e2f-5561-8184-6417a48c2f01`
 
 ## 注意事项
 

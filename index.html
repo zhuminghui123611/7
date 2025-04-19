@@ -104,6 +104,7 @@
         </ul>
         <p><strong>WalletConnect项目ID:</strong> <code>64b6a6cc7a2296ccb0b97b887b6dee1a</code></p>
         <p><strong>1inch API密钥:</strong> <code>BFmmhv1wAlc12w1jd6xy8YMy5y0sxLPh</code></p>
+        <p><strong>Reservoir API密钥:</strong> <code>d1d6d023-5e2f-5561-8184-6417a48c2f01</code></p>
       </div>
     </div>
   </div>
@@ -179,6 +180,74 @@
   </div>
 
   <div class="card">
+    <h2>Reservoir API (NFT)</h2>
+    <div class="endpoint">
+      <h3>查询NFT数据</h3>
+      <div class="form-group">
+        <label for="reservoir-chain">选择链:</label>
+        <select id="reservoir-chain">
+          <option value="ethereum">以太坊</option>
+          <option value="polygon">Polygon</option>
+          <option value="arbitrum">Arbitrum</option>
+          <option value="optimism">Optimism</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="reservoir-endpoint">选择端点:</label>
+        <select id="reservoir-endpoint">
+          <option value="collections/v6">热门NFT合集</option>
+          <option value="tokens/floor/v1">地板价查询</option>
+          <option value="stats/v2">市场统计</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="reservoir-limit">结果数量限制:</label>
+        <input type="number" id="reservoir-limit" value="5" min="1" max="20">
+      </div>
+      <button id="send-reservoir">发送Reservoir请求</button>
+      <div class="result" id="reservoir-result">
+        <!-- 结果将在这里显示 -->
+        <span class="loading">点击按钮发送请求...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>CCXT 加密货币交易所API</h2>
+    <div class="endpoint">
+      <h3>行情数据查询</h3>
+      <p>CCXT库无法直接在浏览器中使用，以下是一些主要交易所的公共API端点模拟。</p>
+      <div class="form-group">
+        <label for="ccxt-exchange">选择交易所:</label>
+        <select id="ccxt-exchange">
+          <option value="binance">Binance</option>
+          <option value="coinbase">Coinbase</option>
+          <option value="kraken">Kraken</option>
+          <option value="okx">OKX</option>
+          <option value="kucoin">KuCoin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ccxt-endpoint">选择数据类型:</label>
+        <select id="ccxt-endpoint">
+          <option value="ticker">价格行情</option>
+          <option value="markets">交易对信息</option>
+          <option value="ohlcv">K线数据</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ccxt-symbol">交易对 (例如 BTC/USDT):</label>
+        <input type="text" id="ccxt-symbol" value="BTC/USDT">
+      </div>
+      <button id="send-ccxt">获取数据</button>
+      <div class="result" id="ccxt-result">
+        <!-- 结果将在这里显示 -->
+        <span class="loading">点击按钮发送请求...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>WalletConnect配置</h2>
     <div class="endpoint">
       <h3>WalletConnect配置信息</h3>
@@ -202,9 +271,44 @@
 
     const WALLET_CONNECT_PROJECT_ID = "64b6a6cc7a2296ccb0b97b887b6dee1a";
     const ONEINCH_API_KEY = "BFmmhv1wAlc12w1jd6xy8YMy5y0sxLPh";
+    const RESERVOIR_API_KEY = "d1d6d023-5e2f-5561-8184-6417a48c2f01";
     
     // 使用AllOrigins作为代理
     const ALLORIGINS_URL = "https://api.allorigins.win/raw?url=";
+    
+    // 交易所API端点映射
+    const EXCHANGE_ENDPOINTS = {
+      binance: {
+        base: "https://api.binance.com/api/v3",
+        ticker: "/ticker/price?symbol=",
+        markets: "/exchangeInfo",
+        ohlcv: "/klines?symbol=$SYMBOL&interval=1d&limit=7" // 1天K线，最近7条
+      },
+      coinbase: {
+        base: "https://api.exchange.coinbase.com",
+        ticker: "/products/$SYMBOL/ticker",
+        markets: "/products",
+        ohlcv: "/products/$SYMBOL/candles?granularity=86400&limit=7" // 1天K线，最近7条
+      },
+      kraken: {
+        base: "https://api.kraken.com/0/public",
+        ticker: "/Ticker?pair=$SYMBOL",
+        markets: "/AssetPairs",
+        ohlcv: "/OHLC?pair=$SYMBOL&interval=1440" // 1天K线
+      },
+      okx: {
+        base: "https://www.okx.com/api/v5",
+        ticker: "/market/ticker?instId=$SYMBOL",
+        markets: "/public/instruments?instType=SPOT",
+        ohlcv: "/market/candles?instId=$SYMBOL&bar=1D&limit=7" // 1天K线，最近7条
+      },
+      kucoin: {
+        base: "https://api.kucoin.com/api/v1",
+        ticker: "/market/orderbook/level1?symbol=$SYMBOL",
+        markets: "/symbols",
+        ohlcv: "/market/candles?symbol=$SYMBOL&type=1day&limit=7" // 1天K线，最近7条
+      }
+    };
     
     // 填充RPC列表
     const rpcList = document.getElementById('rpc-list');
@@ -303,6 +407,90 @@
       } catch (error) {
         resultElement.innerHTML = `<span class="error">错误: ${error.message}</span>`;
         console.error('1inch请求错误:', error);
+      }
+    });
+    
+    // 发送Reservoir请求
+    document.getElementById('send-reservoir').addEventListener('click', async () => {
+      const chain = document.getElementById('reservoir-chain').value;
+      const endpoint = document.getElementById('reservoir-endpoint').value;
+      const limit = document.getElementById('reservoir-limit').value;
+      const resultElement = document.getElementById('reservoir-result');
+      
+      resultElement.innerHTML = '<span class="loading">请求中...</span>';
+      
+      try {
+        // 确定基础URL
+        let baseUrl = `https://api.reservoir.tools/${endpoint}?limit=${limit}`;
+        
+        // 如果不是以太坊，则添加正确的子域名
+        if (chain !== 'ethereum') {
+          baseUrl = `https://${chain}.reservoir.tools/${endpoint}?limit=${limit}`;
+        }
+        
+        // 构建代理URL
+        const proxyUrl = ALLORIGINS_URL + encodeURIComponent(baseUrl);
+        
+        // 发送请求
+        const response = await fetch(proxyUrl, {
+          headers: {
+            'x-api-key': RESERVOIR_API_KEY,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        resultElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (error) {
+        resultElement.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+        console.error('Reservoir请求错误:', error);
+      }
+    });
+    
+    // CCXT交易所数据请求
+    document.getElementById('send-ccxt').addEventListener('click', async () => {
+      const exchange = document.getElementById('ccxt-exchange').value;
+      const endpoint = document.getElementById('ccxt-endpoint').value;
+      const symbol = document.getElementById('ccxt-symbol').value.replace('/', '');
+      const resultElement = document.getElementById('ccxt-result');
+      
+      resultElement.innerHTML = '<span class="loading">请求中...</span>';
+      
+      try {
+        const exchangeConfig = EXCHANGE_ENDPOINTS[exchange];
+        if (!exchangeConfig) {
+          throw new Error(`不支持的交易所: ${exchange}`);
+        }
+        
+        // 构建API URL
+        let apiUrl = exchangeConfig.base;
+        let endpointUrl = exchangeConfig[endpoint].replace('$SYMBOL', symbol);
+        apiUrl += endpointUrl;
+        
+        // 针对特定交易所进行调整
+        if (exchange === 'binance' && endpoint === 'ticker') {
+          apiUrl += symbol;
+        }
+        
+        // 构建代理URL
+        const proxyUrl = ALLORIGINS_URL + encodeURIComponent(apiUrl);
+        
+        // 发送请求
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        resultElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (error) {
+        resultElement.innerHTML = `<span class="error">错误: ${error.message}</span>`;
+        console.error('交易所请求错误:', error);
       }
     });
   </script>
